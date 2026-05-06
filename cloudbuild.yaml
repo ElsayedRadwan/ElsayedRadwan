@@ -4,7 +4,7 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/restore-app:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/restore-app:latest'
       - '.'
 
   # Push the Docker image to Google Container Registry
