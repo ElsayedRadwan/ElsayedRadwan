@@ -11,7 +11,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/restore-app:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/restore-app:$BUILD_ID'
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -21,7 +21,7 @@ steps:
       - 'deploy'
       - 'restore-app'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/restore-app:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/restore-app:$BUILD_ID'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -38,7 +38,7 @@ steps:
 
 # Store images in Google Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/restore-app:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/restore-app:$BUILD_ID'
 
 # Set timeout
 timeout: '1200s'
