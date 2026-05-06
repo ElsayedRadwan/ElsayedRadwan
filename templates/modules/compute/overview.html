@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3><i class="bi bi-hdd-network"></i> Compute Engine Factory</h3>
+            <p class="text-muted mb-0">Create VMs with approved templates, schedule lifecycle actions, and manage bulk operations safely.</p>
+        </div>
+    </div>
+
+    <div class="row gy-4">
+        <div class="col-xl-6">
+            <div class="card info-card">
+                <div class="card-body">
+                    <h5 class="card-title">Create VM</h5>
+                    <form action="/compute/create" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">VM Name</label>
+                            <input type="text" name="vm_name" class="form-control" placeholder="my-app-vm-01" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Zone</label>
+                                <select name="zone" class="form-select">
+                                    {% for zone in zones %}
+                                    <option value="{{ zone }}">{{ zone }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Network</label>
+                                <select name="network" class="form-select">
+                                    {% for net in networks %}
+                                    <option value="{{ net }}">{{ net }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Machine Template</label>
+                            <select name="machine_type" class="form-select">
+                                {% for template in templates %}
+                                <option value="{{ template.value }}">{{ template.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create VM</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card info-card">
+                <div class="card-body">
+                    <h5 class="card-title">Scheduled Lifecycle</h5>
+                    <p class="text-muted">Set bulk lifecycle rules for development and temporary VMs. This is useful for automated cost control.</p>
+                    <form action="/compute/schedule" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Schedule Name</label>
+                            <input type="text" name="schedule_name" class="form-control" placeholder="Stop dev VMs at 18:00">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Action</label>
+                            <select name="action" class="form-select">
+                                <option value="stop">Stop</option>
+                                <option value="start">Start</option>
+                                <option value="delete">Delete</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cron / Time rule</label>
+                            <input type="text" name="schedule" class="form-control" placeholder="e.g. 0 18 * * 5">
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Save Schedule</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

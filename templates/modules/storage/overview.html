@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3><i class="bi bi-cloud-upload"></i> Cloud Storage Manager</h3>
+            <p class="text-muted mb-0">Provision buckets with safe defaults, enforce policies, and review existing storage assets.</p>
+        </div>
+    </div>
+
+    <div class="row gy-4">
+        <div class="col-xl-6">
+            <div class="card info-card">
+                <div class="card-body">
+                    <h5 class="card-title">Provision Bucket</h5>
+                    <form action="/storage/buckets/create" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Bucket Name</label>
+                            <input type="text" name="bucket_name" class="form-control" placeholder="my-app-bucket" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Location</label>
+                                <select name="location" class="form-select">
+                                    {% for loc in locations %}
+                                    <option value="{{ loc }}">{{ loc }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Retention Days</label>
+                                <input type="number" name="retention_days" class="form-control" value="30" min="1">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create Bucket</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card info-card">
+                <div class="card-body">
+                    <h5 class="card-title">Bucket Inventory</h5>
+                    <p class="text-muted">Review buckets provisioned in this project and verify policy status.</p>
+                    {% if buckets %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr><th>Name</th><th>Location</th><th>Storage Class</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for bucket in buckets %}
+                                <tr>
+                                    <td>{{ bucket.name }}</td>
+                                    <td>{{ bucket.location }}</td>
+                                    <td>{{ bucket.storageClass }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No buckets found yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<h3><i class="bi bi-clipboard-check"></i> Compliance Dashboard</h3>
+
+<div id="loading" class="text-center p-5">
+    <div class="spinner-border"></div>
+    <p>Loading...</p>
+</div>
+
+<div id="content" style="display: none;">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <h1 id="score">0%</h1>
+                    <p class="mb-0">Compliance Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <h1 id="protected">0</h1>
+                    <p class="mb-0">Protected</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark text-center">
+                <div class="card-body">
+                    <h1 id="at-risk">0</h1>
+                    <p class="mb-0">At Risk</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h5>VM Status</h5></div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>VM</th><th>Zone</th><th>Env</th><th>Type</th><th>Status</th></tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function load() {
+    try {
+        const res = await fetch('/api/compliance/status');
+        const data = await res.json();
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        
+        document.getElementById('score').textContent = data.score + '%';
+        document.getElementById('protected').textContent = data.protected_vms;
+        document.getElementById('at-risk').textContent = data.unprotected_vms;
+        
+        const tbody = document.getElementById('table-body');
+        data.details.forEach(vm => {
+            const status = vm.status === 'PROTECTED' ? 
+                '<span class="badge bg-success">✓ Protected</span>' : 
+                '<span class="badge bg-warning">⚠ At Risk</span>';
+            tbody.innerHTML += `<tr>
+                <td><strong>${vm.vm_name}</strong></td>
+                <td>${vm.zone}</td>
+                <td><span class="badge bg-secondary">${vm.environment}</span></td>
+                <td>${vm.machine_type}</td>
+                <td>${status}</td>
+            </tr>`;
+        });
+    } catch (e) {
+        console.error(e);
+    }
+}
+load();
+</script>
+{% endblock %}

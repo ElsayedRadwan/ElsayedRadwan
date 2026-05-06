@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-clock-history"></i> Job History</h5></div>
+    <div class="card-body">
+        {% if jobs %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Type</th><th>Name</th><th>User</th><th>Started</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td><span class="badge bg-info">{{ job.type or 'Single' }}</span></td>
+                    <td><strong>{{ job.vm_name }}</strong></td>
+                    <td>{{ job.user }}</td>
+                    <td>{{ job.start_time.strftime('%Y-%m-%d %H:%M') if job.start_time else 'Just now' }}</td>
+                    <td><span class="badge bg-secondary">{{ job.status }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-5">
+            <i class="bi bi-inbox display-4 text-muted"></i>
+            <h4 class="mt-3">No History Yet</h4>
+            <p class="text-muted">Jobs appear here after restore starts</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

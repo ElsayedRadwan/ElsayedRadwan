@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-gear"></i> Edit Plan: {{ plan.name }}</h3>
+    <a href="/plans" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Plans</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Current Tasks ({{ plan.tasks|length }})</div>
+    <div class="card-body">
+        {% if plan.tasks %}
+        <div class="list-group">
+            {% for t in plan.tasks %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">{{ t.vm }}</h6>
+                    <small class="text-muted">{{ t.zone }} | {{ t.net }} | Project: {{ t.project or project }}</small>
+                </div>
+                <form action="/plan/task/del/{{ plan.id }}/{{ loop.index0 }}" method="post">
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No tasks added. Add tasks below.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white"><i class="bi bi-plus-circle"></i> Add New Task</div>
+    <div class="card-body">
+        <form action="/plan/task/add/{{ plan.id }}" method="post">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Backup</label>
+                    <select name="backup" class="form-select">{% for b in backups %}<option value="{{b.value}}">{{b.display}}</option>{% endfor %}</select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">VM Name</label>
+                    <input type="text" name="vm" class="form-control" placeholder="app-server" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Zone</label>
+                    <select name="zone" class="form-select">{% for z in zones %}<option>{{z}}</option>{% endfor %}</select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Network</label>
+                    <select name="net" class="form-select">{% for n in networks %}<option>{{n}}</option>{% endfor %}</select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Project</label>
+                    <select name="project" class="form-select">
+                        <option value="{{ project }}" selected>{{ project }}</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i></button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

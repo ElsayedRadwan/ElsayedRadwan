@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<h3><i class="bi bi-broadcast"></i> Live Backup Monitoring</h3>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white text-center">
+            <div class="card-body">
+                <h4 class="mb-0" id="success-count">0</h4>
+                <small>Succeeded</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white text-center">
+            <div class="card-body">
+                <h4 class="mb-0" id="running-count">0</h4>
+                <small>Running</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark text-center">
+            <div class="card-body">
+                <h4 class="mb-0" id="pending-count">0</h4>
+                <small>Pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white text-center">
+            <div class="card-body">
+                <h4 class="mb-0" id="failed-count">0</h4>
+                <small>Failed</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Recent Backup Jobs</h5>
+        <small class="text-muted">Auto-refreshes every 10 seconds</small>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="jobs-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>VM</th>
+                        <th>Type</th>
+                        <th>Progress</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="jobs-tbody">
+                    {% for job in jobs %}
+                    <tr>
+                        <td>
+                            {% if job.state == 'SUCCEEDED' %}
+                                <span class="badge bg-success">✓ Success</span>
+                            {% elif job.state == 'RUNNING' %}
+                                <span class="badge bg-primary">⟳ Running</span>
+                            {% elif job.state == 'FAILED' %}
+                                <span class="badge bg-danger">✗ Failed</span>
+                            {% else %}
+                                <span class="badge bg-warning">{{ job.state }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ job.targetResource.split('/')[-1] if job.targetResource else 'Unknown' }}</td>
+                        <td>{{ job.jobType }}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" style="width: {{ job.progressPercent or 0 }}%"></div>
+                            </div>
+                        </td>
+                        <td>{{ job.createTime }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// For live updates, you could implement SSE here
+// For now, auto-refresh the page every 30 seconds
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

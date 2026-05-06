@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Virtual Machine Recovery</h5></div>
+            <div class="card-body">
+                <form method="post" action="/restore">
+                    <div class="mb-3">
+                        <label class="form-label">Backup Source</label>
+                        <select name="backup" class="form-select" required>
+                            <option value="" disabled selected>-- Select Backup --</option>
+                            {% for b in backups %}<option value="{{b.value}}">{{b.display}}</option>{% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">New Instance Name</label>
+                            <input type="text" name="new_vm" class="form-control" placeholder="restored-vm-01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Target Zone</label>
+                            <select name="zone" class="form-select">
+                                {% for z in zones %}<option>{{z}}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Network</label>
+                            <select name="network" class="form-select">
+                                {% for n in networks %}<option>{{n}}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Project</label>
+                            <input type="text" name="project" class="form-control" value="{{ project }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary btn-lg w-100 mt-3"><i class="bi bi-lightning-fill"></i> Launch Restore</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <!-- FIXED: Uses info-card class for dark mode compatibility -->
+        <div class="card info-card">
+            <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-info-circle"></i> Service Status</h6>
+                <p class="mb-0">Operational</p>
+                <hr style="border-color: inherit; opacity: 0.2;">
+                <h6>Multi-VM Recovery</h6>
+                <p class="small mb-0">Use <strong>Recovery Plans</strong> from the sidebar to restore application stacks (Web + DB) simultaneously.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

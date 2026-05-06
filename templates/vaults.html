@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-vault"></i> Backup Vaults</h3>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createVaultModal">
+        <i class="bi bi-plus-lg"></i> Create Vault
+    </button>
+</div>
+
+{% if vaults %}
+<div class="row">
+    {% for vault in vaults %}
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-shield-lock"></i> {{ vault.name }}</h5>
+                <span class="badge bg-success">Active</span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Location:</span>
+                        <span class="fw-bold">{{ vault.location or 'us-central1' }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Min Retention:</span>
+                        <span class="fw-bold">{{ vault.backupMinEnforcedRetentionDays or '7' }} days</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Total Backups:</span>
+                        <span class="fw-bold">{{ vault.totalBackups or '0' }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center p-5 card">
+    <i class="bi bi-vault display-4 text-muted"></i>
+    <h4 class="mt-3">No Vaults Found</h4>
+    <p class="text-muted">Create your first backup vault to store protected VM data</p>
+</div>
+{% endif %}
+
+<!-- Create Vault Modal -->
+<div class="modal fade" id="createVaultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/vaults/create" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Backup Vault</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Vault Name *</label>
+                        <input type="text" name="name" class="form-control" placeholder="production-vault" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Region</label>
+                        <select name="region" class="form-select">
+                            <option value="us-central1">us-central1</option>
+                            <option value="me-central2">me-central2 (Dammam)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Minimum Retention (days)</label>
+                        <input type="number" name="retention_days" class="form-control" value="7" min="1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Vault</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
