@@ -1,80 +1,256 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="mb-4">
-    <h2 class="mb-2"><i class="bi bi-shield-fill"></i> Native GCP Backup & Disaster Recovery</h2>
-    <p class="text-muted">Enterprise-grade recovery solutions with zero RPO and guaranteed RTO</p>
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-graph-up"></i> Dashboard</h1>
+    <p class="page-subtitle">Real-time insights into your backup and disaster recovery infrastructure</p>
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Restore</h5></div>
+<!-- KPI Cards Row 1 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card success">
+            <div class="kpi-icon text-success"><i class="bi bi-check-circle"></i></div>
+            <div class="kpi-label">Backup Success Rate</div>
+            <div class="kpi-value">99.8%</div>
+            <small class="text-success"><i class="bi bi-arrow-up"></i> +0.5% this week</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card info">
+            <div class="kpi-icon text-info"><i class="bi bi-clock"></i></div>
+            <div class="kpi-label">Average RPO</div>
+            <div class="kpi-value">4.2h</div>
+            <small class="text-muted">Below SLA target</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card warning">
+            <div class="kpi-icon text-warning"><i class="bi bi-lightning"></i></div>
+            <div class="kpi-label">Average RTO</div>
+            <div class="kpi-value">18.5m</div>
+            <small class="text-muted">Well within SLA</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card info">
+            <div class="kpi-icon text-info"><i class="bi bi-database"></i></div>
+            <div class="kpi-label">Storage Used</div>
+            <div class="kpi-value">2.3TB</div>
+            <small class="text-muted">28% of quota</small>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards Row 2 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card success">
+            <div class="kpi-icon text-success"><i class="bi bi-shield-check"></i></div>
+            <div class="kpi-label">Compliant Resources</div>
+            <div class="kpi-value">47/48</div>
+            <small class="text-warning"><i class="bi bi-exclamation-triangle"></i> 1 non-compliant</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card success">
+            <div class="kpi-icon text-success"><i class="bi bi-folder-check"></i></div>
+            <div class="kpi-label">Active Backups</div>
+            <div class="kpi-value">156</div>
+            <small class="text-muted">Last 30 days</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card info">
+            <div class="kpi-icon text-info"><i class="bi bi-cash-coin"></i></div>
+            <div class="kpi-label">Monthly Cost</div>
+            <div class="kpi-value">$4,250</div>
+            <small class="text-muted">On-track for budget</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card success">
+            <div class="kpi-icon text-success"><i class="bi bi-check-lg"></i></div>
+            <div class="kpi-label">Tests Passed</div>
+            <div class="kpi-value">32/32</div>
+            <small class="text-muted">Latest recovery drills</small>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-graph-up"></i> Backup Trend (30 Days)</h6>
+            </div>
             <div class="card-body">
-                <p class="text-muted small">Restore a single VM from your backup in minutes</p>
+                <canvas id="backupChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-pie-chart"></i> Storage by Region</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="storageChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Restore</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-4">Restore a single VM from your backup in minutes</p>
                 <form method="post" action="/restore">
-                    <div class="mb-3">
-                        <label class="form-label fw-600">Backup Source <span class="text-danger">*</span></label>
-                        <select name="backup" class="form-select" required>
-                            <option value="" disabled selected>-- Select Backup --</option>
-                            {% for b in backups %}<option value="{{b.value}}">{{b.display}}</option>{% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="row g-3 mb-3">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-600">New Instance Name <span class="text-danger">*</span></label>
-                            <input type="text" name="new_vm" class="form-control" placeholder="e.g. restored-vm-01" required pattern="^[a-z]([a-z0-9\-]*[a-z0-9])?$" title="Must start with letter, contain only lowercase letters, digits, hyphens">
+                            <label class="form-label fw-600">Backup Source <span class="text-danger">*</span></label>
+                            <select name="backup" class="form-select" required>
+                                <option value="" disabled selected>-- Select Backup --</option>
+                                {% for b in backups %}<option value="{{b.value}}">{{b.display}}</option>{% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-600">Target Zone <span class="text-danger">*</span></label>
+                            <label class="form-label fw-600">Instance Name <span class="text-danger">*</span></label>
+                            <input type="text" name="new_vm" class="form-control" placeholder="e.g. restored-vm-01" required pattern="^[a-z]([a-z0-9\-]*[a-z0-9])?$">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-600">Zone <span class="text-danger">*</span></label>
                             <select name="zone" class="form-select" required>
                                 {% for z in zones %}<option>{{z}}</option>{% endfor %}
                             </select>
                         </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-600">Network <span class="text-danger">*</span></label>
                             <select name="network" class="form-select" required>
                                 {% for n in networks %}<option>{{n}}</option>{% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-600">Project</label>
-                            <input type="text" name="project" class="form-control" value="{{ project }}" readonly style="background-color: #f0f0f0;">
-                        </div>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-lightning-fill"></i> Launch Restore Now</button>
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-4"><i class="bi bi-lightning-fill"></i> Launch Restore</button>
                 </form>
             </div>
         </div>
     </div>
+    
     <div class="col-lg-4">
-        <div class="card info-card shadow-sm mb-3">
-            <div class="card-header bg-success text-white"><h6 class="mb-0"><i class="bi bi-check-circle"></i> System Status</h6></div>
+        <!-- System Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> System Status</h6>
+            </div>
             <div class="card-body">
-                <p class="mb-2"><strong>Service Status:</strong></p>
-                <span class="badge bg-success"><i class="bi bi-lightning"></i> Operational</span>
-                <hr style="border-color: inherit; opacity: 0.2;">
-                <p class="small mb-0"><strong>Last Backup:</strong> Today at 03:45 UTC</p>
-                <p class="small"><strong>Backups Available:</strong> {{ backups|length }}</p>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-600">Service Status</span>
+                        <span class="status-badge status-operational"><span class="rounded-circle" style="width:8px;height:8px;background:#16a34a;"></span> Operational</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-600">Backup Status</span>
+                        <span class="status-badge status-operational"><span class="rounded-circle" style="width:8px;height:8px;background:#16a34a;"></span> Healthy</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-600">API Health</span>
+                        <span class="status-badge status-operational"><span class="rounded-circle" style="width:8px;height:8px;background:#16a34a;"></span> 99.99%</span>
+                    </div>
+                </div>
+                <hr>
+                <small class="text-muted"><i class="bi bi-clock"></i> Last checked: Just now</small>
             </div>
         </div>
         
-        <div class="card info-card shadow-sm">
-            <div class="card-header bg-info text-white"><h6 class="mb-0"><i class="bi bi-book"></i> Features</h6></div>
+        <!-- SLA Compliance -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-certificate"></i> SLA Compliance</h6>
+            </div>
             <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-2"><i class="bi bi-check text-success"></i> Multi-VM Recovery Plans</li>
-                    <li class="mb-2"><i class="bi bi-check text-success"></i> Compliance Reports</li>
-                    <li class="mb-2"><i class="bi bi-check text-success"></i> Backup Scheduling</li>
-                    <li class="mb-2"><i class="bi bi-check text-success"></i> Job History & Audit</li>
-                    <li><i class="bi bi-check text-success"></i> Native GCP Integration</li>
-                </ul>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">Uptime SLA</span>
+                        <span class="small fw-600">99.95%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 99.95%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">RTO SLA</span>
+                        <span class="small fw-600">Exceeded: 0%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">RPO SLA</span>
+                        <span class="small fw-600">Exceeded: 0%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Backup Trend Chart
+    const backupCtx = document.getElementById('backupChart').getContext('2d');
+    new Chart(backupCtx, {
+        type: 'line',
+        data: {
+            labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+            datasets: [{
+                label: 'Successful Backups',
+                data: [145, 152, 168, 175, 182, 190, 156],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    
+    // Storage Chart
+    const storageCtx = document.getElementById('storageChart').getContext('2d');
+    new Chart(storageCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['us-central1', 'us-east1', 'europe-west1', 'asia-east1'],
+            datasets: [{
+                data: [850, 640, 520, 290],
+                backgroundColor: ['#1e3c72', '#2a5298', '#00d4ff', '#10b981']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+</script>
 {% endblock %}

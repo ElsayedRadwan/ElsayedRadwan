@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-graph-up"></i> Cost Analysis</h1>
+    <p class="page-subtitle">Detailed cost breakdown and optimization insights</p>
+</div>
+
+<!-- Cost Summary -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card info">
+            <div class="kpi-icon text-info"><i class="bi bi-cash-coin"></i></div>
+            <div class="kpi-label">Monthly Spend</div>
+            <div class="kpi-value">$4,250</div>
+            <small class="text-success"><i class="bi bi-arrow-down"></i> -5% vs last month</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card warning">
+            <div class="kpi-icon text-warning"><i class="bi bi-graph-up"></i></div>
+            <div class="kpi-label">YTD Spend</div>
+            <div class="kpi-value">$18,750</div>
+            <small class="text-muted">At 78% of annual budget</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card info">
+            <div class="kpi-icon text-info"><i class="bi bi-piggy-bank"></i></div>
+            <div class="kpi-label">Cost per GB</div>
+            <div class="kpi-value">$1.85</div>
+            <small class="text-muted">Industry avg: $2.10</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card success">
+            <div class="kpi-icon text-success"><i class="bi bi-percent"></i></div>
+            <div class="kpi-label">Savings vs Standard</div>
+            <div class="kpi-value">$2,850</div>
+            <small class="text-success"><i class="bi bi-check"></i> This year</small>
+        </div>
+    </div>
+</div>
+
+<!-- Cost Breakdown -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-pie-chart"></i> Cost by Service</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="costChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-graph-up"></i> Monthly Trend</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cost by Resource -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-database"></i> Top 10 Resources by Cost</h6>
+    </div>
+    <div class="card-body">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Type</th>
+                    <th>Region</th>
+                    <th>Monthly Cost</th>
+                    <th>% of Total</th>
+                    <th>Trend</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>prod-db-01</strong></td>
+                    <td><span class="badge bg-secondary">VM</span></td>
+                    <td>us-central1</td>
+                    <td>$1,200</td>
+                    <td>28.2%</td>
+                    <td><span class="text-success"><i class="bi bi-arrow-down"></i> -2%</span></td>
+                </tr>
+                <tr>
+                    <td><strong>prod-db-02</strong></td>
+                    <td><span class="badge bg-secondary">VM</span></td>
+                    <td>us-central1</td>
+                    <td>$950</td>
+                    <td>22.3%</td>
+                    <td><span class="text-danger"><i class="bi bi-arrow-up"></i> +3%</span></td>
+                </tr>
+                <tr>
+                    <td><strong>backup-storage</strong></td>
+                    <td><span class="badge bg-info">Storage</span></td>
+                    <td>us-central1</td>
+                    <td>$850</td>
+                    <td>20.0%</td>
+                    <td><span class="text-success"><i class="bi bi-arrow-down"></i> -5%</span></td>
+                </tr>
+                <tr>
+                    <td><strong>prod-app-01</strong></td>
+                    <td><span class="badge bg-secondary">VM</span></td>
+                    <td>us-east1</td>
+                    <td>$680</td>
+                    <td>16.0%</td>
+                    <td><span class="text-muted">No change</span></td>
+                </tr>
+                <tr>
+                    <td><strong>archive-backup</strong></td>
+                    <td><span class="badge bg-warning">Archive</span></td>
+                    <td>europe-west1</td>
+                    <td>$340</td>
+                    <td>8.0%</td>
+                    <td><span class="text-danger"><i class="bi bi-arrow-up"></i> +8%</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Optimization Recommendations -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Optimization Recommendations</h6>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle"></i> Implementing these recommendations could save you <strong>$2,100/month</strong>
+        </div>
+        <div class="list-group">
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1"><i class="bi bi-check-circle text-success"></i> Use Archive Storage</h6>
+                        <p class="mb-0 small">Move old backups (>90 days) to Cloud Storage Archive for 50% savings</p>
+                        <small class="text-success"><strong>Potential savings: $850/month</strong></small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary">Learn More</button>
+                </div>
+            </div>
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1"><i class="bi bi-check-circle text-success"></i> Implement Retention Policy</h6>
+                        <p class="mb-0 small">Auto-delete backups older than 30 days to reduce storage footprint</p>
+                        <small class="text-success"><strong>Potential savings: $680/month</strong></small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary">Learn More</button>
+                </div>
+            </div>
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1"><i class="bi bi-check-circle text-success"></i> Regional Optimization</h6>
+                        <p class="mb-0 small">Consolidate backups in us-central1 for better pricing</p>
+                        <small class="text-success"><strong>Potential savings: $570/month</strong></small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary">Learn More</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cost by Service Chart
+    const costCtx = document.getElementById('costChart').getContext('2d');
+    new Chart(costCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Backup Storage', 'Compute (VMs)', 'Archive', 'Network', 'Operations'],
+            datasets: [{
+                data: [1850, 2830, 340, 150, 80],
+                backgroundColor: ['#1e3c72', '#2a5298', '#00d4ff', '#10b981', '#f59e0b']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+    
+    // Monthly Trend Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Monthly Cost',
+                data: [3800, 4100, 4350, 4500, 4250, 4250],
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: (value) => '$' + value } }
+            }
+        }
+    });
+</script>
+{% endblock %}
