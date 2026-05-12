@@ -2,10 +2,11 @@ from flask import Blueprint, render_template, request, session, redirect, flash,
 import subprocess
 import shlex
 import json
+import os
 
 compute_bp = Blueprint('compute', __name__)
 
-PROJECT = "gcp-internal-lab"
+PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT") or "gcp-internal-lab"
 ZONES = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
 NETWORKS = ["default"]
 MACHINE_TEMPLATES = [

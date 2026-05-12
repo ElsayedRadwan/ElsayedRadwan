@@ -3,15 +3,17 @@ from modules.compute_factory import compute_bp
 from modules.storage_manager import storage_bp
 # from modules.iam_jit import iam_bp  # TODO: Implement IAM JIT module
 # from modules.cost_optimizer import cost_bp  # TODO: Implement Cost Optimizer module
-import os, json, subprocess, uuid, time, shlex, urllib.parse, threading
+import os, json, subprocess, uuid, time, shlex, urllib.parse, threading, re
 from datetime import datetime, timezone
 from flask import Flask, request, render_template, redirect, session, flash, jsonify
+from flask_wtf.csrf import CSRFProtect
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from google.cloud import datastore
 from google.cloud import firestore
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.register_blueprint(backup_bp)
 app.register_blueprint(compute_bp)
 app.register_blueprint(storage_bp)
@@ -33,6 +35,21 @@ except Exception as e:
     db_datastore = None
     db_firestore = None
 
+def validate_gcp_resource_name(name, resource_type="vm"):
+    """Validate GCP resource names to prevent injection attacks"""
+    if not name or len(name) > 63:
+        return False
+    # GCP names must start with letter, contain only lowercase letters, digits, hyphens
+    if resource_type == "vm":
+        pattern = r'^[a-z]([a-z0-9\-]*[a-z0-9])?$'
+    elif resource_type == "zone":
+        pattern = r'^[a-z0-9\-]+$'
+    elif resource_type == "network":
+        pattern = r'^[a-zA-Z0-9\-_]+$'
+    else:
+        pattern = r'^[a-z0-9\-_]+$'
+    return bool(re.match(pattern, name))
+
 def run_cmd(c):
     try:
         if "--format" not in c: 
@@ -41,16 +58,29 @@ def run_cmd(c):
         return res.stdout
     except subprocess.CalledProcessError as e:
         print(f"CMD ERROR: {e.stderr}")
-        return "{}"
+        return None
+    except Exception as e:
+        print(f"CMD ERROR: {e}")
+        return None
 
 def get_backups():
     if 'backups_cache' in session and time.time() - session.get('cache_time',0) < 300: 
         return session['backups_cache']
     try:
-        vms = {str(i['id']): i['name'] for i in json.loads(run_cmd(f"gcloud compute instances list --project={PROJECT}"))}
-        dss = json.loads(run_cmd(f"gcloud backup-dr data-sources list --location={REGION} --project={PROJECT}"))
+        vms_cmd = run_cmd(f"gcloud compute instances list --project={PROJECT}")
+        if not vms_cmd: return []
+        vms = {str(i['id']): i['name'] for i in json.loads(vms_cmd)}
+        
+        dss_cmd = run_cmd(f"gcloud backup-dr data-sources list --location={REGION} --project={PROJECT}")
+        if not dss_cmd: return []
+        dss = json.loads(dss_cmd)
+        
         ds_map = {d['name']: vms.get(d.get('dataSourceGcpResource',{}).get('gcpResourcename','').split('/')[-1], "Vaulted") for d in dss}
-        bks = json.loads(run_cmd(f"gcloud backup-dr backups list --location={REGION} --project={PROJECT}"))
+        
+        bks_cmd = run_cmd(f"gcloud backup-dr backups list --location={REGION} --project={PROJECT}")
+        if not bks_cmd: return []
+        bks = json.loads(bks_cmd)
+        
         data = []
         for b in bks:
             ds_path = "/".join(b['name'].split('/')[:-2])
@@ -59,14 +89,18 @@ def get_backups():
         session['backups_cache'] = sorted(data, key=lambda x: x['display'], reverse=True)
         session['cache_time'] = time.time()
         return session['backups_cache']
-    except: 
+    except (json.JSONDecodeError, KeyError, ValueError) as e:
+        print(f"Backup fetch error: {e}")
         return []
 
 def get_networks():
     try:
         out = run_cmd(f"gcloud compute networks list --project={PROJECT} --format='value(name)'")
+        if not out:
+            return ["default"]
         return out.strip().split('\n')
-    except: 
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"Networks fetch error: {e}")
         return ["default"]
 
 @app.route("/")
@@ -103,8 +137,25 @@ def home():
 def restore():
     if 'user' not in session: 
         return redirect("/login")
-    vm_name = request.form['new_vm']
+    vm_name = request.form.get('new_vm', '').strip()
+    zone = request.form.get('zone', '').strip()
+    network = request.form.get('network', '').strip()
+    backup = request.form.get('backup', '').strip()
     user = session['user']
+    
+    # Validate inputs
+    if not validate_gcp_resource_name(vm_name, "vm"):
+        flash("Invalid VM name format", "danger")
+        return redirect("/home")
+    if not validate_gcp_resource_name(zone, "zone"):
+        flash("Invalid zone format", "danger")
+        return redirect("/home")
+    if not validate_gcp_resource_name(network, "network"):
+        flash("Invalid network format", "danger")
+        return redirect("/home")
+    if not backup:
+        flash("No backup selected", "danger")
+        return redirect("/home")
     
     try:
         # Save to history first and get doc reference
@@ -119,8 +170,13 @@ def restore():
                 'type': 'single'
             })
         
-        cmd = f"gcloud backup-dr backups restore compute {request.form['backup']} --async --project={PROJECT} --name={vm_name} --target-project={PROJECT} --target-zone={request.form['zone']} --network-interface=network=projects/{PROJECT}/global/networks/{request.form['network']} --format=json"
-        output = json.loads(run_cmd(cmd))
+        cmd = f"gcloud backup-dr backups restore compute {backup} --async --project={PROJECT} --name={vm_name} --target-project={PROJECT} --target-zone={zone} --network-interface=network=projects/{PROJECT}/global/networks/{network} --format=json"
+        cmd_output = run_cmd(cmd)
+        if not cmd_output:
+            flash("Failed to execute restore command", "danger")
+            return redirect("/home")
+        
+        output = json.loads(cmd_output)
         op_id = output.get('name', '')
         
         # Update with operation_id for tracking
@@ -128,6 +184,9 @@ def restore():
             doc_ref.update({'operation_id': op_id})
             
         return redirect(f"/status/{urllib.parse.quote(op_id)}")
+    except (json.JSONDecodeError, KeyError) as e:
+        flash(f"Invalid response: {e}", "danger")
+        return redirect("/home")
     except Exception as e:
         flash(f"Error: {e}", "danger")
         return redirect("/home")
@@ -141,14 +200,19 @@ def status_page(op_id):
 @app.route("/api/check_status/<path:op_id>")
 def api_check_status(op_id):
     try:
-        res = json.loads(run_cmd(f"gcloud backup-dr operations describe {op_id} --project={PROJECT} --location={REGION}"))
+        cmd_output = run_cmd(f"gcloud backup-dr operations describe {op_id} --project={PROJECT} --location={REGION}")
+        if not cmd_output:
+            return jsonify({"done": False, "error": "Command failed"})
+        res = json.loads(cmd_output)
         done = res.get('done', False)
         error = res.get('error', None)
         return jsonify({"done": done, "error": error})
-    except: 
-        return jsonify({"done": False, "error": "Unknown"})
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"Status check error: {e}")
+        return jsonify({"done": False, "error": "Invalid response"})
 
 def run_task_thread(exec_id, task_idx, task, user):
+    fs = None
     try:
         fs = firestore.Client(project=PROJECT, database=FIRESTORE_DB)
         
@@ -185,16 +249,36 @@ def run_task_thread(exec_id, task_idx, task, user):
             'type': 'plan',
             'operation_id': op_id
         })
+    except subprocess.CalledProcessError as e:
+        print(f"Task command error: {e.stderr}")
+        if fs:
+            try:
+                fs.collection('plan_executions').document(exec_id).collection('tasks').document(f'task_{task_idx}').update({
+                    'status': 'FAILED',
+                    'error': str(e)
+                })
+            except Exception as update_err:
+                print(f"Failed to update task status: {update_err}")
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"Task response error: {e}")
+        if fs:
+            try:
+                fs.collection('plan_executions').document(exec_id).collection('tasks').document(f'task_{task_idx}').update({
+                    'status': 'FAILED',
+                    'error': str(e)
+                })
+            except Exception as update_err:
+                print(f"Failed to update task status: {update_err}")
     except Exception as e:
         print(f"Task error: {e}")
-        try:
-            fs = firestore.Client(project=PROJECT, database=FIRESTORE_DB)
-            fs.collection('plan_executions').document(exec_id).collection('tasks').document(f'task_{task_idx}').update({
-                'status': 'FAILED',
-                'error': str(e)
-            })
-        except: 
-            pass
+        if fs:
+            try:
+                fs.collection('plan_executions').document(exec_id).collection('tasks').document(f'task_{task_idx}').update({
+                    'status': 'FAILED',
+                    'error': str(e)
+                })
+            except Exception as update_err:
+                print(f"Failed to update task status: {update_err}")
 
 @app.route("/plan/run/<pid>", methods=["POST"])
 def run_plan(pid):
@@ -202,6 +286,9 @@ def run_plan(pid):
         return redirect("/login")
     if not db_datastore:
         flash("Database not available", "danger")
+        return redirect("/plans")
+    if not db_firestore:
+        flash("Firestore not available", "danger")
         return redirect("/plans")
     
     plan = db_datastore.get(db_datastore.key('restore_plans', pid))
@@ -222,12 +309,15 @@ def run_plan(pid):
         })
     except Exception as e:
         print(f"Exec record error: {e}")
+        flash("Failed to create execution record", "danger")
+        return redirect("/plans")
     
-    # Start all tasks
+    # Start all tasks as daemon threads
+    threads = []
     for idx, task in enumerate(plan['tasks']):
-        t = threading.Thread(target=run_task_thread, args=(exec_id, idx, task, user))
-        t.daemon = False
+        t = threading.Thread(target=run_task_thread, args=(exec_id, idx, task, user), daemon=True)
         t.start()
+        threads.append(t)
         time.sleep(0.5)
     
     flash(f"Started {len(plan['tasks'])} restore tasks", "success")
@@ -252,22 +342,24 @@ def api_plan_execution(exec_id):
             # Check operation status if STARTED
             if t.get('operation_id') and t.get('status') == 'STARTED':
                 try:
-                    op_res = json.loads(run_cmd(f"gcloud backup-dr operations describe {t['operation_id']} --project={PROJECT} --location={REGION}"))
-                    if op_res.get('done'):
-                        new_status = 'COMPLETED' if not op_res.get('error') else 'FAILED'
-                        # Update Firestore
-                        doc.reference.update({'status': new_status})
-                        t['status'] = new_status
-                        
-                        # Update history too
-                        try:
-                            history = fs.collection('jobs').where('operation_id', '==', t['operation_id']).limit(1).stream()
-                            for h in history:
-                                h.reference.update({'status': new_status})
-                        except: 
-                            pass
-                except: 
-                    pass
+                    cmd_output = run_cmd(f"gcloud backup-dr operations describe {t['operation_id']} --project={PROJECT} --location={REGION}")
+                    if cmd_output:
+                        op_res = json.loads(cmd_output)
+                        if op_res.get('done'):
+                            new_status = 'COMPLETED' if not op_res.get('error') else 'FAILED'
+                            # Update Firestore
+                            doc.reference.update({'status': new_status})
+                            t['status'] = new_status
+                            
+                            # Update history too
+                            try:
+                                history = fs.collection('jobs').where('operation_id', '==', t['operation_id']).limit(1).stream()
+                                for h in history:
+                                    h.reference.update({'status': new_status})
+                            except Exception as update_err:
+                                print(f"History update error: {update_err}")
+                except (json.JSONDecodeError, ValueError) as e:
+                    print(f"Operation status check error: {e}")
             tasks.append(t)
         
         tasks.sort(key=lambda x: x.get('task_index', 0))
@@ -291,12 +383,14 @@ def jobs():
                 job = doc.to_dict()
                 if job.get('operation_id'):
                     try:
-                        op_res = json.loads(run_cmd(f"gcloud backup-dr operations describe {job['operation_id']} --project={PROJECT} --location={REGION}"))
-                        if op_res.get('done'):
-                            new_status = 'COMPLETED' if not op_res.get('error') else 'FAILED'
-                            doc.reference.update({'status': new_status})
-                    except: 
-                        pass
+                        cmd_output = run_cmd(f"gcloud backup-dr operations describe {job['operation_id']} --project={PROJECT} --location={REGION}")
+                        if cmd_output:
+                            op_res = json.loads(cmd_output)
+                            if op_res.get('done'):
+                                new_status = 'COMPLETED' if not op_res.get('error') else 'FAILED'
+                                doc.reference.update({'status': new_status})
+                    except (json.JSONDecodeError, ValueError) as e:
+                        print(f"Operation status check error: {e}")
             
             # Fetch updated list
             jobs_list = [doc.to_dict() for doc in db_firestore.collection('jobs').order_by('timestamp', direction=firestore.Query.DESCENDING).limit(20).stream()]
@@ -314,8 +408,8 @@ def plans():
             q = db_datastore.query(kind='restore_plans')
             q.order = ['-createdAt']
             items = [dict(e, id=e.key.name) for e in q.fetch()]
-    except: 
-        pass
+    except Exception as e:
+        print(f"Plans fetch error: {e}")
     return render_template("plans.html", plans=items, user=session['user'])
 
 @app.route("/plan/create", methods=["POST"])

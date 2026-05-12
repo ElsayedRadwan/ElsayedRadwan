@@ -5,13 +5,14 @@ import subprocess
 import shlex
 import json
 import time
+import os
 from datetime import datetime, timezone, timedelta
 from threading import Thread
 import requests
 
 backup_bp = Blueprint('backup', __name__)
 
-PROJECT = "gcp-internal-lab"
+PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT") or "gcp-internal-lab"
 REGION = "us-central1"
 
 def run_cmd(c):

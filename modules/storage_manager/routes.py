@@ -2,10 +2,11 @@ from flask import Blueprint, render_template, request, session, redirect, flash,
 import subprocess
 import shlex
 import json
+import os
 
 storage_bp = Blueprint('storage', __name__)
 
-PROJECT = "gcp-internal-lab"
+PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT") or "gcp-internal-lab"
 LOCATIONS = ["US", "EU", "ASIA-EAST1"]
 
 
