@@ -1,8 +1,5 @@
 from modules.backup_plans import backup_bp
-from modules.compute_factory import compute_bp
-from modules.storage_manager import storage_bp
-# from modules.iam_jit import iam_bp  # TODO: Implement IAM JIT module
-# from modules.cost_optimizer import cost_bp  # TODO: Implement Cost Optimizer module
+# Removed non-Backup&DR modules for focused solution
 import os, json, subprocess, uuid, time, shlex, urllib.parse, threading, re
 from datetime import datetime, timezone
 from flask import Flask, request, render_template, redirect, session, flash, jsonify
@@ -15,10 +12,7 @@ from google.cloud import firestore
 app = Flask(__name__)
 csrf = CSRFProtect(app)
 app.register_blueprint(backup_bp)
-app.register_blueprint(compute_bp)
-app.register_blueprint(storage_bp)
-# app.register_blueprint(iam_bp)  # TODO: Implement IAM JIT module
-# app.register_blueprint(cost_bp)  # TODO: Implement Cost Optimizer module
+# Removed: compute_bp, storage_bp (focused on native GCP Backup & DR only)
 app.secret_key = os.environ.get("FLASK_SECRET", "super-secret-key-for-production")
 
 PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT") or "gcp-internal-lab"

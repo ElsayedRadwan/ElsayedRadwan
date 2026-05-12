@@ -1,53 +1,95 @@
-# GCP One Portal for All Operations
+# GCP Native Backup & Disaster Recovery Portal
 
-A comprehensive web portal for managing Google Cloud Platform operations including Backup & Disaster Recovery, Compute Engine, Cloud Storage, IAM/JIT Access, and Cost Optimization.
+A professional, enterprise-grade backup and disaster recovery management platform built specifically for Google Cloud Platform. Streamline your data protection strategy with seamless integration to GCP Backup & Disaster Recovery services.
 
-## Features
+## 🎯 Core Features
 
-### 🔄 Backup & Disaster Recovery
-- Create and manage backup plans for GCP VMs
-- Real-time monitoring of backup jobs
-- Compliance reporting and vault management
-- Automated retention policies
-- Cost estimation for backup storage
+### 💾 Quick Restore
+- Single-click VM recovery from backups
+- Configurable target zone and network
+- Real-time operation tracking
+- Instant failover capability
 
-### 🖥️ Compute Factory
-- Bulk VM creation from Excel uploads
-- VM lifecycle management
-- Automated provisioning workflows
+### 📋 Recovery Plans
+- Multi-VM coordinated recovery
+- Application-stack aware restoration
+- Automated task orchestration
+- Bulk recovery operations
 
-### 🗄️ Cloud Storage Manager
-- Bucket creation and configuration
-- Storage lifecycle policies
-- Access control management
-- Cost monitoring and optimization
+### 📅 Backup Management
+- GCP Backup & Disaster Recovery integration
+- Automated backup scheduling
+- Retention policy management
+- Backup plan creation and monitoring
 
-### 🔐 IAM & JIT Access
-- Just-In-Time access management
-- Role-based access control
-- Audit logging and compliance
+### 📊 Compliance & Monitoring
+- Audit logging and compliance reports
+- Job history with detailed tracking
+- Operation status monitoring
+- Recovery time objective (RTO) tracking
 
-### 💰 Cost Optimization
-- Resource usage analysis
-- Cost forecasting and budgeting
-- Optimization recommendations
+### 🔐 Enterprise Security
+- OAuth 2.0 authentication
+- CSRF protection
+- Input validation & sanitization
+- Firestore-backed audit trail
 
-## Architecture
+## 🏗️ Architecture
 
 - **Backend**: Python Flask with modular blueprints
-- **Frontend**: HTML/CSS/JavaScript with Jinja2 templates
-- **Database**: Google Cloud Firestore
-- **Deployment**: Google Cloud Run with Docker
+- **Frontend**: Bootstrap 5 responsive UI with dark/light mode
+- **Database**: Google Cloud Firestore + Cloud Datastore
+- **Deployment**: Google Cloud Run (serverless)
 - **Authentication**: Google OAuth 2.0
+- **Integration**: Native GCP Backup & Disaster Recovery APIs
 
-## Project Structure
+## 📦 Tech Stack
 
+- **Python 3.9+** with Flask 3.0
+- **Google Cloud SDKs** (Firestore, Datastore, Backup & Disaster Recovery)
+- **Bootstrap 5.3** for responsive UI
+- **Flask-WTF** for CSRF protection
+
+## 🚀 Deployment
+
+### Quick Start
+
+```bash
+# Build Docker image
+docker build -t restore-app:latest .
+
+# Deploy to Cloud Run
+gcloud run deploy restore-app \
+  --image restore-app:latest \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
 ```
-restore-app/
-├── app.py                 # Main Flask application
-├── modules/               # Feature modules
-│   ├── backup_plans.py    # Backup & DR functionality
-│   ├── compute_factory/   # VM management
+
+### Environment Variables
+
+- `GOOGLE_CLOUD_PROJECT`: GCP Project ID (default: gcp-internal-lab)
+- `FLASK_SECRET`: Flask session secret key
+- `PORT`: HTTP port (default: 8080)
+
+## 📝 Usage
+
+1. **Login** with your Google account
+2. **Quick Restore**: Select a backup and restore a VM
+3. **Create Plans**: Set up multi-VM recovery orchestration
+4. **Monitor**: Track jobs and compliance status
+
+## ⚙️ Security Features
+
+- ✅ Input validation on all user inputs
+- ✅ CSRF token protection on all forms
+- ✅ Specific exception handling (no bare except clauses)
+- ✅ Secure database initialization with proper None checks
+- ✅ Thread-safe operations
+
+## 📄 License
+
+Internal Use - GCP Backup & DR Solutions
 │   ├── storage_manager/   # Cloud Storage operations
 │   ├── iam_jit/          # Identity & Access (planned)
 │   └── cost_optimizer/   # Cost analysis (planned)
